@@ -1,58 +1,94 @@
-const express = require('express');
-const app = express();
-const porta = 3000;
+import 'dotenv/config'
+import express from 'express';
+import mongoose from 'mongoose';
+import usuarios from './usuarios.js';
 
-app.get ('/', (req,res) => {
-    res.send ('O Servidor está vivo e respondendo!');
+
+const app = express();
+const PORT = 3000;
+
+async function conectaNaDatabase(){
+   mongoose.connect(process.env.DB_CONNECTION_STRING);
+   return mongoose.connection;
+};
+
+const conexao = await conectaNaDatabase();
+
+conexao.on('error',(erro) => {
+   console.error('Erro de conexão:', erro);
 });
 
-app.use(express.json())
- let usuarios = [
-    {id:1, nome: 'João'},
-    {id:2, nome: 'Vítor'}
- ];
+conexao.once('open', () => {
+   console.log('Conexão com o banco de dados feita com sucesso');
+})
 
- app.get ('/usuarios', (req,res) => {
-    res.json (usuarios);
+
+app.use(express.json())
+
+
+// Rota básica '/'
+app.get ('/', (req,res) => {
+    res.status(200).send('O Servidor está vivo e respondendo!');
+});
+
+ // get para visualizar o BD
+ app.get ('/usuarios', async (req,res) => {
+   const listadeUsuarios = await usuarios.find({});
+    res.status(200).json(listadeUsuarios);
  });
 
- app.post ('/usuarios', (req,res) => {
+ //post para visualizar um item no BD
+ app.get ('/usuarios/:id', async (req,res) => {
+    const { id } = req.params;
+    let usuario = await usuarios.findById(id);
+    if (usuario){
+      res.status(200).send(usuario);
+    } else {
+      res.status(404).json({ mensagem: 'Usuário não encontrado. Verifique o ID' });
+    }
+    });
+
+ 
+ //post para adicionar itens no BD
+ app.post ('/usuarios', async (req,res) => {
     const novoUsuario = req.body;
-    usuarios.push(novoUsuario);
+    await usuarios.create(novoUsuario);
     res.status(201).json ({mensagem: 'Usuário adicionado com sucesso!', novoUsuario: novoUsuario});
  });
 
- app.delete ('/usuarios/:id', (req,res) => {
+// para deletar itens no BD
+ app.delete ('/usuarios/:id', async (req,res) => {
     const { id } = req.params;
-    usuarios = usuarios.filter(u => u.id !== parseInt(id));
-    res.send ('Usuário deletado com sucesso!');
+    await usuarios.findByIdAndDelete(id);
+    res.status(200).send ('Usuário deletado com sucesso!');
  });
 
- app.put ('/usuarios/:id', (req,res) => {
+
+ //put para atualizar parte do item no BD
+ app.put ('/usuarios/:id', async (req,res) => {
     const { id } = req.params;
     const { nome } = req.body;
-    const i = (usuarios.findIndex(u => u.id === parseInt(id)));
-    if (i !== -1){
-      usuarios[i] = { id: parseInt(id), nome};
-      res.json ({mensagem: 'Atualizado com Sucesso!', nome: nome});
+    const usuarioAtualizado = await usuarios.findByIdAndUpdate(id, { nome }, { new: true });
+    if (usuarioAtualizado){
+      res.status(200).json ({mensagem: 'Atualizado com Sucesso!', nome: nome});
     } else {
       res.status(404).json ({erro: 'Usuário não encontrado'});
     }
  });
 
- app.patch ('/usuarios/:id', (req,res) => {
+ //patch para atualizar item no BD
+ app.patch ('/usuarios/:id', async (req,res) => {
     const { id } = req.params;
     const novosDados = req.body;
-    const usuario = (usuarios.find(u => u.id === parseInt(id)));
+    const usuarioAtualizado = await usuarios.findByIdAndUpdate(id, novosDados, { new: true });
 
-    if (usuario){
-      Object.assign(usuario, novosDados);
-      res.json ({mensagem: 'Atualizado com Sucesso!', usuario: usuario});
+    if (usuarioAtualizado){
+      res.status(200).json ({mensagem: 'Atualizado com Sucesso!', usuario: usuarioAtualizado});
     } else {
       res.status(404).json ({erro: 'Usuário não encontrado'});
     }
  });
 
-app.listen (porta, () => {
-    console.log (`Servidor rodando em http://localhost:${porta}`);
-})
+app.listen (PORT, () => {
+    console.log (`Servidor rodando em http://localhost:${PORT}`);
+});

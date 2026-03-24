@@ -4,6 +4,10 @@ Este repositório contém uma implementação prática de uma API utilizando Nod
 🧠 Contexto do Projeto
 Este código foi desenvolvido como parte dos meus estudos de back-end, conectando a lógica de programação à agência do usuário e aos conceitos de imersão em ambientes digitais (temas que exploro na minha pesquisa acadêmica sobre narrativas em jogos eletrônicos).
 
+Atualização do Projto
+Este projeto nasceu como um estudo de rotas Express utilizando armazenamento em memória (Arrays). Recentemente, foi refatorado para suportar persistência de dados real utilizando MongoDB e Mongoose, implementando uma arquitetura de dados mais robusta.
+
+
 🛠️ Tecnologias Utilizadas
 Node.js: Ambiente de execução.
 
